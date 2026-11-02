@@ -1,0 +1,36 @@
+services:
+  sentinel-stream:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sentinel-stream-service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=False
+      - HOST=0.0.0.0
+      - PORT=8000
+      - WORKERS=2
+      - FRAUD_THRESHOLD=0.50
+      - HIGH_RISK_THRESHOLD=0.85
+      - LATENCY_BUDGET_MS=30.0
+      - LOG_LEVEL=INFO
+    volumes:
+      # Mount model artifacts directory for zero-downtime model updates
+      - ./ml/artifacts:/app/ml/artifacts
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2048M
+        reservations:
+          cpus: '0.5'
+          memory: 512M
